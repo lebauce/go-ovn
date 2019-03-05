@@ -94,8 +94,8 @@ func (odbi *ovnDBImp) lswDelImp(lsw string) *OvnCommand {
 }
 
 func (odbi *ovnDBImp) getRowUUID(table string, row OVNRow) string {
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for uuid, drows := range odbi.cache[table] {
 		found := false
 		for field, value := range row {
@@ -133,8 +133,8 @@ func (odbi *ovnDBImp) oMapContians(s, t map[interface{}]interface{}) bool {
 }
 
 func (odbi *ovnDBImp) getACLUUIDByRow(lsw, table string, row OVNRow) string {
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for _, drows := range odbi.cache[LSWITCH] {
 		if rlsw, ok := drows.Fields["name"].(string); ok && rlsw == lsw {
 			acls := drows.Fields["acls"]
@@ -219,8 +219,8 @@ func (odbi *ovnDBImp) getACLUUIDByRow(lsw, table string, row OVNRow) string {
 }
 
 func (odbi *ovnDBImp) getRowUUIDContainsUUID(table, field, uuid string) string {
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for id, drows := range odbi.cache[table] {
 		v := fmt.Sprintf("%s", drows.Fields[field])
 		if strings.Contains(v, uuid) {
@@ -657,8 +657,8 @@ func (odbi *ovnDBImp) RowToLogicalPort(uuid string) *LogcalPort {
 // Get all logical switches
 func (odbi *ovnDBImp) GetLogicSwitches() []*LogicalSwitch {
 	var lslist = []*LogicalSwitch{}
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for uuid, _ := range odbi.cache[LSWITCH] {
 		lslist = append(lslist, odbi.RowToLogicalSwitch(uuid))
 	}
@@ -668,8 +668,8 @@ func (odbi *ovnDBImp) GetLogicSwitches() []*LogicalSwitch {
 // Get all lport by lswitch
 func (odbi *ovnDBImp) GetLogicPortsBySwitch(lsw string) []*LogcalPort {
 	var lplist = []*LogcalPort{}
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for _, drows := range odbi.cache[LSWITCH] {
 		if rlsw, ok := drows.Fields["name"].(string); ok && rlsw == lsw {
 			ports := drows.Fields["ports"]
@@ -720,8 +720,8 @@ func (odbi *ovnDBImp) RowToACL(uuid string) *ACL {
 func (odbi *ovnDBImp) GetACLsBySwitch(lsw string) []*ACL {
 	//TODO: should be improvement here, when have lots of acls.
 	acllist := make([]*ACL, 0, 0)
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for _, drows := range odbi.cache[LSWITCH] {
 		if rlsw, ok := drows.Fields["name"].(string); ok && rlsw == lsw {
 			acls := drows.Fields["acls"]
@@ -752,8 +752,8 @@ func (odbi *ovnDBImp) GetACLsBySwitch(lsw string) []*ACL {
 // Get all addressset
 func (odbi *ovnDBImp) GetAddressSets() []*AddressSet {
 	adlist := make([]*AddressSet, 0, 0)
-	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 	for uuid, drows := range odbi.cache[Address_Set] {
 		ta := &AddressSet{
 			UUID:       uuid,
