@@ -562,7 +562,6 @@ func (odbi *ovnDBImp) float64_to_int(row libovsdb.Row) {
 func (odbi *ovnDBImp) populateCache(updates libovsdb.TableUpdates) {
 	glog.V(OVNLOGLEVEL).Info("New nofity arrived")
 	odbi.cachemutex.Lock()
-	defer odbi.cachemutex.Unlock()
 	for table, tableUpdate := range updates.Updates {
 		if _, ok := odbi.cache[table]; !ok {
 			odbi.cache[table] = make(map[string]libovsdb.Row)
@@ -579,13 +578,13 @@ func (odbi *ovnDBImp) populateCache(updates libovsdb.TableUpdates) {
 					switch table {
 					case LSWITCH:
 						ls := odbi.RowToLogicalSwitch(uuid)
-						odbi.callback.OnLogicalSwitchCreate(ls)
+						defer odbi.callback.OnLogicalSwitchCreate(ls)
 					case LPORT:
 						lp := odbi.RowToLogicalPort(uuid)
-						odbi.callback.OnLogicalPortCreate(lp)
+						defer odbi.callback.OnLogicalPortCreate(lp)
 					case ACLS:
 						acl := odbi.RowToACL(uuid)
-						odbi.callback.OnACLCreate(acl)
+						defer odbi.callback.OnACLCreate(acl)
 					}
 				}
 			} else {
@@ -593,19 +592,23 @@ func (odbi *ovnDBImp) populateCache(updates libovsdb.TableUpdates) {
 					switch table {
 					case LSWITCH:
 						ls := odbi.RowToLogicalSwitch(uuid)
-						odbi.callback.OnLogicalSwitchDelete(ls)
+						defer odbi.callback.OnLogicalSwitchDelete(ls)
 					case LPORT:
 						lp := odbi.RowToLogicalPort(uuid)
-						odbi.callback.OnLogicalPortDelete(lp)
+						defer odbi.callback.OnLogicalPortDelete(lp)
 					case ACLS:
 						acl := odbi.RowToACL(uuid)
-						odbi.callback.OnACLDelete(acl)
+						defer odbi.callback.OnACLDelete(acl)
 					}
 				}
 				delete(odbi.cache[table], uuid)
 			}
 		}
 	}
+	odbi.cachemutex.Unlock()
+
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
 }
 
 func (odbi *ovnDBImp) ConvertGoSetToStringArray(oset libovsdb.OvsSet) []string {
